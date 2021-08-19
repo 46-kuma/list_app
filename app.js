@@ -1,16 +1,15 @@
 const express = require('express');
-const { Client } = require('pg');
+const mysql = require('mysql');
 const app = express();
 
 app.use(express.static('public'));
 app.use(express.urlencoded({extended: false}));
 
-const connection = new Client({
-  user: 'postgres',
+const connection = mysql.createConnection({
   host: 'localhost',
-  database: 'list_app',
-  password: '71824046',
-  port: 5432
+  user: 'root',
+  password: 'password',
+  database: 'list_app'
 });
 
 connection.connect((err) => {

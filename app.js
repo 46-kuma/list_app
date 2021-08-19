@@ -1,5 +1,5 @@
 const express = require('express');
-const mysql = require('mysql');
+var mysql = require('mysql');
 const app = express();
 
 app.use(express.static('public'));
@@ -12,18 +12,19 @@ const connection = mysql.createConnection({
   database: 'heroku_daa7d2ad0787280'
 });
 
-const port = process.env.PORT || 5000;
+var port = process.env.PORT || 5000;
 
-connection.connect((err) => {
-  if (err) {
-    console.log('error connecting: ' + err.stack);
-    return;
-  }
-  console.log('success');
-});
+//connection.connect((err) => {
+//  if (err) {
+//    console.log('error connecting: ' + err.stack);
+//    return;
+//  }
+//  console.log('success');
+//});
 
 app.get('/', (req, res) => {
-  res.render('top.ejs');
+  res.send('hello'+items[0].name);
+//  res.render('top.ejs');
 });
 
 app.get('/index', (req, res) => {

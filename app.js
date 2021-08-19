@@ -5,7 +5,7 @@ const app = express();
 app.use(express.static('public'));
 app.use(express.urlencoded({extended: false}));
 
-const connection = mysql.createConnection({
+var pool = mysql.createPool({
   //mysql://b1697e3f9f3791:35c81551@us-cdbr-east-04.cleardb.com/heroku_daa7d2ad0787280?reconnect=true
   host: 'us-cdbr-east-04.cleardb.com',
   user: 'b1697e3f9f3791',
@@ -13,41 +13,7 @@ const connection = mysql.createConnection({
   database: 'heroku_daa7d2ad0787280'
 });
 
-function handleDisconnect() {
-  console.log('INFO.CONNECTION_DB: ');
-  
-  //connection取得
-  connection.connect(function(err) {
-      if (err) {
-          console.log('ERROR.CONNECTION_DB: ', err);
-          setTimeout(handleDisconnect, 1000);
-      }
-  });
-  
-  //error('PROTOCOL_CONNECTION_LOST')時に再接続
-  connection.on('error', function(err) {
-      console.log('ERROR.DB: ', err);
-      if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-          console.log('ERROR.CONNECTION_LOST: ', err);
-          handleDisconnect();
-      } else {
-          throw err;
-      }
-  });
-}
-
-handleDisconnect();
-
-
-var port = process.env.PORT || 5000;
-
-connection.connect((err) => {
-  if (err) {
-    console.log('error connecting: ' + err.stack);
-    return;
-  }
-  console.log('success');
-});
+app.set('port', (process.env.PORT || 5000));
 
 app.get('/', (req, res) => {
 //  res.send('hello'+items[0].name);
@@ -55,12 +21,15 @@ app.get('/', (req, res) => {
 });
 
 app.get('/index', (req, res) => {
+  pool.getConnection(function(err, connection){
   connection.query(
-    'SELECT * FROM items',
-    (error, results) => {
-      res.render('index.ejs', {items: results});
-    }
-  );
+      'SELECT * FROM items',
+      (error, results) => {
+        res.render('index.ejs', {items: results});
+      }
+    );
+    connection.release();
+  });
 });
 
 app.get('/new', (req, res) => {
@@ -68,43 +37,57 @@ app.get('/new', (req, res) => {
 });
 
 app.post('/create', (req, res) => {
-  connection.query(
-    'INSERT INTO items (name) VALUES (?)',
-    [req.body.itemName],
-    (error, results) => {
-      res.redirect('/index');
-    }
-  );
+  pool.getConnection(function(err, connection){
+    connection.query(
+      'INSERT INTO items (name) VALUES (?)',
+      [req.body.itemName],
+      (error, results) => {
+        res.redirect('/index');
+      }
+    );
+    connection.release();
+  });
 });
 
 app.post('/delete/:id', (req, res) => {
-  connection.query(
-    'DELETE FROM items WHERE id = ?',
-    [req.params.id],
-    (error, results) => {
-      res.redirect('/index');
-    }
-  );
+  pool.getConnection(function(err, connection){
+    connection.query(
+      'DELETE FROM items WHERE id = ?',
+      [req.params.id],
+      (error, results) => {
+        res.redirect('/index');
+      }
+    );
+    connection.release();
+  });
 });
 
 app.get('/edit/:id', (req, res) => {
-  connection.query(
-    'SELECT * FROM items WHERE id = ?',
-    [req.params.id],
-    (error, results) => {
-      res.render('edit.ejs', {item: results[0]});
-    }
-  );
+  pool.getConnection(function(err, connection){
+    connection.query(
+      'SELECT * FROM items WHERE id = ?',
+      [req.params.id],
+      (error, results) => {
+        res.render('edit.ejs', {item: results[0]});
+      }
+    );
+    connection.release();
+  });
 });
 
 app.post('/update/:id', (req, res) => {
-  connection.query(
-    'UPDATE items SET name=? WHERE id=?',
-    [req.body.itemName, req.params.id],
-    (error, results) => {
-      res.redirect('/index');
-    }
-  )
+  pool.getConnection(function(err, connection){
+    connection.query(
+      'UPDATE items SET name=? WHERE id=?',
+      [req.body.itemName, req.params.id],
+      (error, results) => {
+        res.redirect('/index');
+      }
+    );
+    connection.release();
+  });
 });
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+app.listen(app.get('port'), function() {
+  console.log('heroku-mysql app is running on port', app.get('port'));
+});

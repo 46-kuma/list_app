@@ -12,9 +12,9 @@ const connection = mysql.createConnection({
   database: 'heroku_daa7d2ad0787280'
 });
 
-var port = process.env.PORT || 5000;
+var pool = mysql.createPool(connection);
 
-var pool = mysql.createPool(db_config);
+var port = process.env.PORT || 5000;
 
 app.get('/', (req, res) => {
   console.log("heroku-mysql!!");
@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
     connection.query('SELECT * FROM t_message WHERE id=1', function(err, rows, fields){
       if(err){
         console.log('error: ', err);
-        throw err;
+//        throw err;
       }
       response.writeHead(200,{'Content-Type': 'text/plain'});
       response.write(rows[0].message);

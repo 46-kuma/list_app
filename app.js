@@ -12,6 +12,8 @@ const connection = mysql.createConnection({
   database: 'heroku_daa7d2ad0787280'
 });
 
+const port = process.env.PORT || 5000;
+
 connection.connect((err) => {
   if (err) {
     console.log('error connecting: ' + err.stack);
@@ -77,4 +79,4 @@ app.post('/update/:id', (req, res) => {
   )
 });
 
-app.listen(3000);
+app.listen(port, () => console.log(`Example app listening on port ${port}!`));
